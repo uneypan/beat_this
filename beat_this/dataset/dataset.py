@@ -145,7 +145,7 @@ class BeatTrackingDataset(Dataset):
 
     def _get_spect(self, item):
         try:
-            dataset, filename = str(item["spect_path"]).split("/", 1)
+            dataset, filename = str(item["spect_path"]).replace("\\", "/").split("/", 1)
             spect = self.spects[dataset][filename[:-4]]
         except KeyError:
             spect = np.load(self.spect_basepath / item["spect_path"], mmap_mode="r")
