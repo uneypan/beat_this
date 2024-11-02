@@ -1,0 +1,148 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Main Results",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/launch_scripts/compute_paper_metrics.py",
+            "args": ["--models", "final0", "final1", "final2", "--datasplit", "test"],
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Debug Smaller Model",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/launch_scripts/compute_paper_metrics.py",
+            "args": ["--models", "small0", "small1", "small2", "--datasplit", "test"],
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Debug Hung Data",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/launch_scripts/compute_paper_metrics.py",
+            "args": ["--models", "hung0", "hung1", "hung2", "--datasplit", "test"],
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Debug With DBN",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/launch_scripts/compute_paper_metrics.py",
+            "args": ["--models", "final0", "final1", "final2", "--datasplit", "test", "--dbn"],
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Debug 8-fold Cross-validation",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/launch_scripts/compute_paper_metrics.py",
+            "args": ["--models", "fold0", "fold1", "fold2", "fold3", "fold4", "fold5", "fold6", "fold7", "--datasplit", "val", "--aggregation-type", "k-fold"],
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Debug Ablation - Our System",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/launch_scripts/compute_paper_metrics.py",
+            "args": ["--models", "single_final0", "single_final1", "single_final2", "--datasplit", "val"],
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Debug Ablation - No Sum Head",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/launch_scripts/compute_paper_metrics.py",
+            "args": ["--models", "single_nosumhead0", "single_nosumhead1", "single_nosumhead2", "--datasplit", "val"],
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Debug Ablation - No Tempo Augmentation",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/launch_scripts/compute_paper_metrics.py",
+            "args": ["--models", "single_notempoaug0", "single_notempoaug1", "single_notempoaug2", "--datasplit", "val"],
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Debug Ablation - No Mask Augmentation",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/launch_scripts/compute_paper_metrics.py",
+            "args": ["--models", "single_nomaskaug0", "single_nomaskaug1", "single_nomaskaug2", "--datasplit", "val"],
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Debug Ablation - No Partial Transformers",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/launch_scripts/compute_paper_metrics.py",
+            "args": ["--models", "single_nopartialt0", "single_nopartialt1", "single_nopartialt2", "--datasplit", "val"],
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Debug Ablation - No Shift Tolerance",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/launch_scripts/compute_paper_metrics.py",
+            "args": ["--models", "single_noshifttol0", "single_noshifttol1", "single_noshifttol2", "--datasplit", "val"],
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Debug Ablation - No Pitch Augmentation",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/launch_scripts/compute_paper_metrics.py",
+            "args": ["--models", "single_nopitchaug0", "single_nopitchaug1", "single_nopitchaug2", "--datasplit", "val"],
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Debug Ablation - No Shift Tolerance and No Weights",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/launch_scripts/compute_paper_metrics.py",
+            "args": ["--models", "single_noshifttolnoweights0", "single_noshifttolnoweights1", "single_noshifttolnoweights2", "--datasplit", "val"],
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        }
+    ]
+}
