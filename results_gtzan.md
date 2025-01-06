@@ -1,0 +1,56 @@
+### Main
+F-measure_beat: 0.891 +- 0.003
+Cemgil_beat: 0.824 +- 0.004
+CMLt_beat: 0.798 +- 0.006
+AMLt_beat: 0.898 +- 0.004
+F-measure_downbeat: 0.783 +- 0.004
+Cemgil_downbeat: 0.74 +- 0.004
+CMLt_downbeat: 0.672 +- 0.008
+AMLt_downbeat: 0.791 +- 0.006
+
+
+### DBN
+F-measure_beat: 0.881 +- 0.003
+Cemgil_beat: 0.814 +- 0.004
+CMLt_beat: 0.805 +- 0.004
+AMLt_beat: 0.911 +- 0.002
+F-measure_downbeat: 0.774 +- 0.002
+Cemgil_downbeat: 0.74 +- 0.003
+CMLt_downbeat: 0.733 +- 0.002
+AMLt_downbeat: 0.878 +- 0.005
+
+
+### Small 
+F-measure_beat: 0.888 +- 0.002
+Cemgil_beat: 0.828 +- 0.002
+CMLt_beat: 0.794 +- 0.004
+AMLt_beat: 0.89 +- 0.004
+F-measure_downbeat: 0.772 +- 0.002
+Cemgil_downbeat: 0.738 +- 0.004
+CMLt_downbeat: 0.653 +- 0.003
+AMLt_downbeat: 0.78 +- 0.002
+
+
+### BF
+F-measure_beat: 0.846 +- 0.005
+Cemgil_beat: 0.795 +- 0.004
+CMLt_beat: 0.702 +- 0.012
+AMLt_beat: 0.874 +- 0.003
+F-measure_downbeat: 0.525 +- 0.004
+Cemgil_downbeat: 0.56 +- 0.006
+CMLt_downbeat: 0.124 +- 0.002
+AMLt_downbeat: 0.579 +- 0.009
+
+
+
+### DP
+F-measure_beat: 0.862 +- 0.005
+Cemgil_beat: 0.802 +- 0.005
+CMLt_beat: 0.754 +- 0.01
+AMLt_beat: 0.907 +- 0.001
+F-measure_downbeat: 0.402 +- 0.001
+Cemgil_downbeat: 0.463 +- 0.002
+CMLt_downbeat: 0.0 +- 0.0
+AMLt_downbeat: 0.118 +- 0.004
+
+
