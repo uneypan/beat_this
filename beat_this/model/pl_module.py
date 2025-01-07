@@ -39,6 +39,7 @@ class PLBeatThis(LightningModule):
         eval_trim_beats=5,
         sum_head=True,
         partial_transformers=True,
+        postprocessor="minimal",
     ):
         super().__init__()
         self.save_hyperparameters()
@@ -91,7 +92,7 @@ class PLBeatThis(LightningModule):
             )
 
         self.postprocessor = Postprocessor(
-            type="dbn" if use_dbn else "minimal", fps=fps
+            type=postprocessor, fps=fps
         )
         self.eval_trim_beats = eval_trim_beats
         self.metrics = Metrics(eval_trim_beats=eval_trim_beats)

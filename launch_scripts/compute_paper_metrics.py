@@ -1,5 +1,7 @@
 import argparse
 from pathlib import Path
+import sys
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 import numpy as np
 from pytorch_lightning import Trainer, seed_everything
@@ -23,7 +25,7 @@ def main(args):
         datamodule = datamodule_setup(checkpoint, args.num_workers, args.datasplit)
         # create model and trainer
         model, trainer = plmodel_setup(
-            checkpoint, args.eval_trim_beats, args.dbn, args.gpu
+            checkpoint, args.eval_trim_beats, args.gpu, args.postprocessor
         )
         # predict
         metrics, dataset, preds, piece = compute_predictions(
@@ -58,7 +60,7 @@ def main(args):
             for checkpoint_path in args.models:
                 checkpoint = load_checkpoint(checkpoint_path)
                 model, trainer = plmodel_setup(
-                    checkpoint, args.eval_trim_beats, args.dbn, args.gpu
+                    checkpoint, args.eval_trim_beats, args.gpu, args.postprocessor
                 )
 
                 metrics, dataset, preds, piece = compute_predictions(
@@ -97,7 +99,7 @@ def main(args):
                 )
                 # create model and trainer
                 model, trainer = plmodel_setup(
-                    checkpoint, args.eval_trim_beats, args.dbn, args.gpu
+                    checkpoint, args.eval_trim_beats, args.gpu, args.postprocessor
                 )
                 # predict
                 metrics, dataset, preds, piece = compute_predictions(
@@ -150,15 +152,15 @@ def datamodule_setup(checkpoint, num_workers, datasplit):
     return datamodule
 
 
-def plmodel_setup(checkpoint, eval_trim_beats, dbn, gpu):
+def plmodel_setup(checkpoint, eval_trim_beats, gpu, postprocessor):
     """
     Set up the pytorch lightning model and trainer for evaluation.
 
     Args:
         checkpoint_path (dict): The dict containing the checkpoint to load.
         eval_trim_beats (int or None): The number of beats to trim during evaluation. If None, the setting is taken from the pretrained model.
-        dbn (bool or None): Whether to use the Dynamic Bayesian Network (DBN) module during evaluation. If None, the default behavior from the pretrained model is used.
         gpu (int): The index of the GPU device to use for training.
+        postprocessor (str): The postprocessor to use for the predictions, 'minimal' or 'dbn'.
 
     Returns:
         tuple: A tuple containing the initialized pytorch lightning model and trainer.
@@ -166,8 +168,9 @@ def plmodel_setup(checkpoint, eval_trim_beats, dbn, gpu):
     """
     if eval_trim_beats is not None:
         checkpoint["hyper_parameters"]["eval_trim_beats"] = eval_trim_beats
-    if dbn is not None:
-        checkpoint["hyper_parameters"]["use_dbn"] = dbn
+
+    if postprocessor is not None:
+        checkpoint["hyper_parameters"]["postprocessor"] = postprocessor
 
     model = PLBeatThis(**checkpoint["hyper_parameters"])
     model.load_state_dict(checkpoint["state_dict"])
@@ -191,6 +194,8 @@ def plmodel_setup(checkpoint, eval_trim_beats, dbn, gpu):
 
 def compute_predictions(model, trainer, predict_dataloader):
     print("Computing predictions ...")
+    # check that the dataloader is not empty
+    assert len(predict_dataloader) >= 0, "The dataloader is empty"
     out = trainer.predict(model, predict_dataloader)
     metrics = [o[0] for o in out]
     preds = [o[1] for o in out]
@@ -222,7 +227,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--gpu", type=int, default=0)
     parser.add_argument(
-        "--num_workers", type=int, default=8, help="number of data loading workers "
+        "--num_workers", type=int, default=1, help="number of data loading workers "
     )
     parser.add_argument(
         "--eval_trim_beats",
@@ -233,10 +238,10 @@ if __name__ == "__main__":
         "per piece in evaluating (default: as stored in model)",
     )
     parser.add_argument(
-        "--dbn",
-        default=None,
-        action=argparse.BooleanOptionalAction,
-        help="override the option to use madmom postprocessing dbn",
+        "--postprocessor",
+        type=str,
+        default='minimal',
+        help="Postprocessor to use for the predictions: ['minimal','dbn','dp','bf','sppk'] (default: %(default)s)",
     )
     parser.add_argument(
         "--aggregation-type",

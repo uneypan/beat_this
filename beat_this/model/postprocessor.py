@@ -22,7 +22,7 @@ class Postprocessor:
     """
 
     def __init__(self, type: str = "minimal", fps: int = 50):
-        assert type in ["minimal", "dbn"]
+        assert type in ["minimal", "dbn", 'bf', "dp", "sppk", 'plpdp', 'pf'], "Invalid postprocessing type"
         self.type = type
         self.fps = fps
         if type == "dbn":
@@ -35,6 +35,20 @@ class Postprocessor:
                 fps=self.fps,
                 transition_lambda=100,
             )
+
+        if type == 'bf':
+            from temgo import BFBeatTracker
+            self.bf = BFBeatTracker(
+                mode='offline', 
+                maxbpm=215, 
+                minbpm=55, 
+                fps=self.fps,
+                align=False,
+            )
+        
+        if type == "dp":
+            import librosa
+            self.dp = librosa.beat.beat_track
 
     def __call__(
         self,
@@ -71,6 +85,16 @@ class Postprocessor:
             )
         elif self.type == "dbn":
             postp_beat, postp_downbeat = self.postp_dbn(beat, downbeat, padding_mask)
+            
+        elif self.type == 'bf':
+            postp_beat, postp_downbeat = self.postp_bf(beat, downbeat, padding_mask)
+
+        elif self.type == "dp":
+            postp_beat, postp_downbeat = self.postp_dp(beat, downbeat, padding_mask)
+        
+        elif self.type == 'sppk':
+            postp_beat, postp_downbeat = self.postp_sppk(beat, downbeat, padding_mask)
+            
         else:
             raise ValueError("Invalid postprocessing type")
 
@@ -81,7 +105,55 @@ class Postprocessor:
 
         # update the model prediction dict
         return postp_beat, postp_downbeat
+    
+    def postp_bf(self, beat, downbeat, padding_mask):
+        beat_prob = beat.double().sigmoid()
+        downbeat_prob = downbeat.double().sigmoid()
+        with ThreadPoolExecutor() as executor:
+            postp_beat, postp_downbeat = zip(
+                *executor.map(
+                    self._postp_bf_item, beat_prob, downbeat_prob, padding_mask
+                )
+            )
+        return postp_beat, postp_downbeat
 
+
+    def _postp_bf_item(self, padded_beat_prob, padded_downbeat_prob, mask):
+        """Function to compute the operations that must be computed piece by piece, and cannot be done in batch."""
+        # unpad the predictions by truncating the padding positions
+        beat_prob = padded_beat_prob[mask]
+        downbeat_prob = padded_downbeat_prob[mask]
+
+        # again we limit the lower bound to avoid problems with the BF
+        epsilon = 1e-5
+        beat_prob = np.maximum(beat_prob.cpu().numpy() + downbeat_prob.cpu().numpy(), epsilon / 2)
+        downbeat_prob = downbeat_prob.cpu().numpy()
+
+        # run the BF
+        postp_beat = np.array(self.bf(onset_envelope=beat_prob))
+        postp_downbeat = np.array(self.bf(onset_envelope=downbeat_prob))
+        return postp_beat, postp_downbeat
+
+    def postp_dp(self, beat, downbeat, padding_mask):
+        beat_prob = beat.double().sigmoid()
+        downbeat_prob = downbeat.double().sigmoid()
+        with ThreadPoolExecutor() as executor:
+            postp_beat, postp_downbeat = zip(
+                *executor.map(
+                    self._postp_dp_item, beat_prob, downbeat_prob, padding_mask
+                )
+            )
+        return postp_beat, postp_downbeat
+    
+    def _postp_dp_item(self, padded_beat_prob, padded_downbeat_prob, mask):
+        beat_prob = padded_beat_prob[mask].cpu().numpy()
+        downbeat_prob = padded_downbeat_prob[mask].cpu().numpy()
+        beat_prob = beat_prob + downbeat_prob
+        _, postp_beat = self.dp(onset_envelope=beat_prob, sr=self.fps, hop_length=1, units='time')
+        _, postp_downbeat = self.dp(onset_envelope=beat_prob, sr=self.fps, hop_length=1, units='time')
+        return postp_beat, postp_downbeat
+
+    
     def postp_minimal(self, beat, downbeat, padding_mask):
         # concatenate beat and downbeat in the same tensor of shape (B, T, 2)
         packed_pred = rearrange(
@@ -172,6 +244,35 @@ class Postprocessor:
         postp_downbeat = dbn_out[dbn_out[:, 1] == 1][:, 0]
         return postp_beat, postp_downbeat
 
+    def postp_sppk(self, beat, downbeat, padding_mask):
+        beat_prob = beat.double().sigmoid()
+        downbeat_prob = downbeat.double().sigmoid()
+        with ThreadPoolExecutor() as executor:
+            postp_beat, postp_downbeat = zip(
+                *executor.map(
+                    self._postp_sppk_item, beat_prob, downbeat_prob, padding_mask
+                )
+            )
+        return postp_beat, postp_downbeat
+
+    def _postp_sppk_item(self, padded_beat_prob, padded_downbeat_prob, mask):
+        """Function to compute the operations that must be computed piece by piece, and cannot be done in batch."""
+        # https://github.com/SunnyCYC/plpdp4beat 
+        beat_prob = padded_beat_prob[mask].cpu().numpy()
+        downbeat_prob = padded_downbeat_prob[mask].cpu().numpy()
+        beat_prob = beat_prob + downbeat_prob
+        # run the SPPK
+        from scipy.signal import find_peaks
+        beats_spppk_tmp, _ = find_peaks(beat_prob, height = 0.1, 
+                                        distance = 7, 
+                                        prominence = 0.1)
+        downbeat_spppk_tmp, _ = find_peaks(downbeat_prob, height = 0.1, 
+                                        distance = 7, 
+                                        prominence = 0.1)
+        postp_beat = beats_spppk_tmp / self.fps
+        postp_downbeat = downbeat_spppk_tmp / self.fps
+        return postp_beat, postp_downbeat
+        
 
 def deduplicate_peaks(peaks, width=1) -> np.ndarray:
     """
