@@ -90,9 +90,8 @@ class PLBeatThis(LightningModule):
             raise ValueError(
                 "loss_type must be one of 'shift_tolerant_weighted_bce', 'weighted_bce', 'bce'"
             )
-
         self.postprocessor = Postprocessor(
-            type=postprocessor, fps=fps
+            type=postprocessor if use_dbn == False else 'dbn', fps=fps
         )
         self.eval_trim_beats = eval_trim_beats
         self.metrics = Metrics(eval_trim_beats=eval_trim_beats)

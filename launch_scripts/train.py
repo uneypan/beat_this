@@ -89,7 +89,7 @@ def main(args):
         loss_type=args.loss,
         warmup_steps=args.warmup_steps,
         max_epochs=args.max_epochs,
-        use_dbn=args.dbn,
+        postprocessor=args.postprocessor,
         eval_trim_beats=args.eval_trim_beats,
         sum_head=args.sum_head,
         partial_transformers=args.partial_transformers,
@@ -192,12 +192,6 @@ if __name__ == "__main__":
         help="maximum seq length for training in frames",
     )
     parser.add_argument(
-        "--dbn",
-        default=False,
-        action=argparse.BooleanOptionalAction,
-        help="use madmom postprocessing DBN",
-    )
-    parser.add_argument(
         "--eval-trim-beats",
         metavar="SECONDS",
         type=float,
@@ -271,7 +265,13 @@ if __name__ == "__main__":
         default=0,
         help="Seed for the random number generators.",
     )
-
+    parser.add_argument(
+        "--postprocessor",
+        type=str,
+        default='minimal',
+        choices=['minimal','dbn','dp','bf','sppk'],
+        help="Postprocessor to use for the predictions: (default: %(default)s)",
+    )
     args = parser.parse_args()
 
     main(args)

@@ -241,7 +241,8 @@ if __name__ == "__main__":
         "--postprocessor",
         type=str,
         default='minimal',
-        help="Postprocessor to use for the predictions: ['minimal','dbn','dp','bf','sppk'] (default: %(default)s)",
+        choices=['minimal','dbn','dp','bf','sppk'],
+        help="Postprocessor to use for the predictions: (default: %(default)s)",
     )
     parser.add_argument(
         "--aggregation-type",
