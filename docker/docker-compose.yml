@@ -1,0 +1,34 @@
+# Run the following command to start the container
+# 1. docker compose up -d
+# 2. docker exec -it beat_this bash
+# 3. install the required packages
+# pip install tqdm einops soxr rotary-embedding-torch pytorch_lightning[extra] pandas mir_eval tensorboard wandb nvitop -i https://pypi.tuna.tsinghua.edu.cn/simple 
+# pip install  src/librosa -i https://pypi.tuna.tsinghua.edu.cn/simple 
+# pip install  src/madmom -i https://pypi.tuna.tsinghua.edu.cn/simple 
+# pip install  -e . -e src/temgo 
+
+
+services:
+  deep_learning:
+    image: docker.1ms.run/pytorch/pytorch:2.1.0-cuda11.8-cudnn8-devel
+    container_name: beat_this
+    shm_size: 1g
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    volumes:
+      - C:/Users/admin/Desktop/beat_this:/workspace # change to your local path
+    working_dir: /workspace
+    # ports:
+    #   - "6006:6006" # tensorboard port
+    stdin_open: true
+    tty: true
+    command: >
+      bash -c "tail -f /dev/null"
+
+
