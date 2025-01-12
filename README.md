@@ -25,11 +25,25 @@ The beat tracker requires Python with a set of packages installed:
 1. [Install PyTorch](https://pytorch.org/get-started/locally/) 2.0 or later following the instructions for your platform.
 2. Install further modules with `pip install tqdm einops soxr rotary-embedding-torch`. (If using conda, we still recommend pip. You may try installing `soxr-python` and `einops` from conda-forge, but `rotary-embedding-torch` is only on PyPI.)
 3. To read other audio formats than `.wav`, install `ffmpeg` or another supported backend for `torchaudio`. (`ffmpeg` can be installed via conda or via your operating system.)
+```bash
+pip install tqdm einops soxr rotary-embedding-torch pytorch_lightning[extra] pandas mir_eval tensorboard wandb
+```
 
 Finally, install our beat tracker with:
 ```bash
 pip install https://github.com/CPJKU/beat_this/archive/main.zip
 ```
+```
+pip install tqdm einops soxr rotary-embedding-torch pytorch_lightning[extra] pandas mir_eval tensorboard wandb nvitop -i https://pypi.tuna.tsinghua.edu.cn/simple &&
+pip install  . -i https://pypi.tuna.tsinghua.edu.cn/simple 
+pip install  src/librosa -i https://pypi.tuna.tsinghua.edu.cn/simple &&
+pip install  src/madmom -i https://pypi.tuna.tsinghua.edu.cn/simple &&
+pip install  src/temgo -i https://pypi.tuna.tsinghua.edu.cn/simple &&
+```
+
+19c2d491c85055b74350f89a394fe5301cae8042
+
+python /workspace/launch_scripts/train.py --logger wandb --num-workers 4 --batch-size=4 --val-frequency=1 --postprocessor=bf --name=bf --loss=weighted_bce
 
 ### Command line
 
@@ -50,7 +64,7 @@ If you have a lot of files to process, you can distribute the load over multiple
 ```bash
 for gpu in {0..3}; do beat_this input_dir -o output_dir --touch-first --skip-existing --gpu=$gpu & done
 ```
-If you want to use the DBN for postprocessing, add `--dbn`. The DBN parameters are the default ones from madmom. This requires installing the `madmom` package.
+If you want to use the DBN for postprocessing, add `--postprocessor dbn`. The DBN parameters are the default ones from madmom. This requires installing the `madmom` package.
 
 ### Python class
 
@@ -140,7 +154,6 @@ pip install pytorch_lightning pandas mir_eval
 ```
 You must also obtain and set up the annotations and spectrogram datasets [as indicated above](#data). Specifically, the GTZAN dataset suffices for commands that include `--data split test`, while all other datasets are required for commands that include `--data split val`.
 
-
 ### Command line
 
 #### Compute results on the test set (GTZAN) corresponding to Table 2 in the paper.
@@ -162,13 +175,30 @@ python launch_scripts/compute_paper_metrics.py --models hung0 hung1 hung2 --data
 
 With DBN (this requires installing the madmom package):
 ```bash
-python launch_scripts/compute_paper_metrics.py --models final0 final1 final2 --datasplit test --dbn
+python launch_scripts/compute_paper_metrics.py --models final0 final1 final2 --datasplit test --postprocessor dbn
 ```
 
 #### Compute 8-fold cross-validation results, corresponding to Table 1 in the paper.
 
+Main:
 ```bash
 python launch_scripts/compute_paper_metrics.py --models fold0  fold1 fold2 fold3 fold4 fold5 fold6 fold7 --datasplit val --aggregation-type k-fold
+```
+Dynamic Baysian Network:
+```bash
+python launch_scripts/compute_paper_metrics.py --models fold0  fold1 fold2 fold3 fold4 fold5 fold6 fold7 --datasplit val --aggregation-type k-fold --postprocessor dbn
+```
+Baysian Filter:
+```bash
+python launch_scripts/compute_paper_metrics.py --models fold0  fold1 fold2 fold3 fold4 fold5 fold6 fold7 --datasplit val --aggregation-type k-fold --postprocessor bf
+```
+Dynamic Programming:
+```bash
+python launch_scripts/compute_paper_metrics.py --models fold0  fold1 fold2 fold3 fold4 fold5 fold6 fold7 --datasplit val --aggregation-type k-fold --postprocessor dp
+```
+Simple Peak Picking:
+```bash
+python launch_scripts/compute_paper_metrics.py --models fold0  fold1 fold2 fold3 fold4 fold5 fold6 fold7 --datasplit val --aggregation-type k-fold --postprocessor sppk
 ```
 
 #### Compute ablation studies on the validation set of the single split, correponding to Table 3 in the paper.
@@ -222,6 +252,9 @@ The training requirements match the [evaluation requirements](#requirements-1) f
 ### Command line
 
 #### Train models listed in Table 2 in the paper.
+
+Tensorboard:
+`tensorboard --logdir=lightning_logs --bind_all`
 
 Main results for our system (final0, final1, final2):
 ```bash
@@ -354,4 +387,8 @@ To copy the BeatThis model into your own project, you will need the [`beat_track
     booktitle = {Proceedings of the 25th International Society for Music Information Retrieval Conference (ISMIR)},
     address = {San Francisco, CA, United States},
 }
+```
+```
+python launch_scripts/train.py --logger wandb --num-workers 4 --batch-si
+ze=4 --val-frequency=1 --loss=weighted_bce
 ```
