@@ -1,0 +1,161 @@
+Dataset metrics
+F-measure_beat
+asap: 0.757
+ballroom: 0.973
+beatles: 0.935
+candombe: 0.996
+filosax: 0.992
+groove_midi: 0.936
+guitarset: 0.928
+hainsworth: 0.919
+harmonix: 0.956
+hjdb: 0.981
+jaah: 0.948
+rwc_classical: 0.76
+rwc_jazz: 0.821
+rwc_popular: 0.961
+rwc_royalty-free: 0.949
+simac: 0.772
+smc: 0.607
+tapcorrect: 0.917
+------
+Cemgil_beat
+asap: 0.677
+ballroom: 0.914
+beatles: 0.839
+candombe: 0.908
+filosax: 0.92
+groove_midi: 0.842
+guitarset: 0.845
+hainsworth: 0.866
+harmonix: 0.863
+hjdb: 0.951
+jaah: 0.847
+rwc_classical: 0.611
+rwc_jazz: 0.705
+rwc_popular: 0.904
+rwc_royalty-free: 0.745
+simac: 0.717
+smc: 0.484
+tapcorrect: 0.861
+------
+CMLt_beat
+asap: 0.456
+ballroom: 0.959
+beatles: 0.851
+candombe: 0.996
+filosax: 0.983
+groove_midi: 0.861
+guitarset: 0.826
+hainsworth: 0.83
+harmonix: 0.889
+hjdb: 0.963
+jaah: 0.876
+rwc_classical: 0.488
+rwc_jazz: 0.68
+rwc_popular: 0.897
+rwc_royalty-free: 0.884
+simac: 0.522
+smc: 0.432
+tapcorrect: 0.787
+------
+AMLt_beat
+asap: 0.541
+ballroom: 0.968
+beatles: 0.917
+candombe: 0.996
+filosax: 0.983
+groove_midi: 0.903
+guitarset: 0.886
+hainsworth: 0.896
+harmonix: 0.929
+hjdb: 0.97
+jaah: 0.892
+rwc_classical: 0.563
+rwc_jazz: 0.722
+rwc_popular: 0.93
+rwc_royalty-free: 0.95
+simac: 0.837
+smc: 0.541
+tapcorrect: 0.865
+------
+F-measure_downbeat
+asap: 0.571
+ballroom: 0.948
+beatles: 0.86
+candombe: 0.997
+filosax: 0.972
+groove_midi: 0.812
+guitarset: 0.9
+hainsworth: 0.774
+harmonix: 0.892
+hjdb: 0.964
+jaah: 0.821
+rwc_classical: 0.615
+rwc_jazz: 0.77
+rwc_popular: 0.92
+rwc_royalty-free: 0.91
+simac: 0.0
+smc: 0.0
+tapcorrect: 0.822
+------
+Cemgil_downbeat
+asap: 0.545
+ballroom: 0.896
+beatles: 0.779
+candombe: 0.904
+filosax: 0.894
+groove_midi: 0.755
+guitarset: 0.823
+hainsworth: 0.755
+harmonix: 0.81
+hjdb: 0.933
+jaah: 0.744
+rwc_classical: 0.513
+rwc_jazz: 0.664
+rwc_popular: 0.865
+rwc_royalty-free: 0.713
+simac: 0.0
+smc: 0.0
+tapcorrect: 0.784
+------
+CMLt_downbeat
+asap: 0.177
+ballroom: 0.908
+beatles: 0.673
+candombe: 0.999
+filosax: 0.926
+groove_midi: 0.684
+guitarset: 0.812
+hainsworth: 0.567
+harmonix: 0.762
+hjdb: 0.934
+jaah: 0.617
+rwc_classical: 0.274
+rwc_jazz: 0.617
+rwc_popular: 0.816
+rwc_royalty-free: 0.795
+simac: 0.0
+smc: 0.0
+tapcorrect: 0.577
+------
+AMLt_downbeat
+asap: 0.373
+ballroom: 0.926
+beatles: 0.774
+candombe: 0.999
+filosax: 0.926
+groove_midi: 0.784
+guitarset: 0.885
+hainsworth: 0.702
+harmonix: 0.817
+hjdb: 0.947
+jaah: 0.671
+rwc_classical: 0.4
+rwc_jazz: 0.691
+rwc_popular: 0.842
+rwc_royalty-free: 0.795
+simac: 0.0
+smc: 0.0
+tapcorrect: 0.713
+------

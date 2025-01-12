@@ -1,3 +1,23 @@
+Main results for our system:
+```bash
+python launch_scripts/compute_paper_metrics.py --models final0 final1 final2 --datasplit test
+```
+
+Smaller model:
+```bash
+python launch_scripts/compute_paper_metrics.py --models small0 small1 small2 --datasplit test
+```
+
+Hung data:
+```bash
+python launch_scripts/compute_paper_metrics.py --models hung0 hung1 hung2 --datasplit test
+```
+
+With DBN (this requires installing the madmom package):
+```bash
+python launch_scripts/compute_paper_metrics.py --models final0 final1 final2 --datasplit test --dbn
+```
+
 ### Main
 F-measure_beat: 0.891 +- 0.003
 Cemgil_beat: 0.824 +- 0.004
