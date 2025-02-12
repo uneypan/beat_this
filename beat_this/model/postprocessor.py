@@ -43,12 +43,12 @@ class Postprocessor:
                 maxbpm=215, 
                 minbpm=55, 
                 fps=self.fps,
-                align=False,
+                align=True,
             )
         
         if type == "dp":
-            import librosa
-            self.dp = librosa.beat.beat_track
+            from librosa.beat import beat_track
+            self.dp = beat_track
 
     def __call__(
         self,
@@ -126,12 +126,12 @@ class Postprocessor:
 
         # again we limit the lower bound to avoid problems with the BF
         epsilon = 1e-5
-        beat_prob = np.maximum(beat_prob.cpu().numpy() + downbeat_prob.cpu().numpy(), epsilon / 2)
+        beat_prob = np.maximum(beat_prob.cpu().numpy(), epsilon / 2)
         downbeat_prob = downbeat_prob.cpu().numpy()
 
         # run the BF
         postp_beat = np.array(self.bf(onset_envelope=beat_prob))
-        postp_downbeat = np.array(self.bf(onset_envelope=downbeat_prob))
+        postp_downbeat = np.array([]) 
         return postp_beat, postp_downbeat
 
     def postp_dp(self, beat, downbeat, padding_mask):
@@ -150,7 +150,7 @@ class Postprocessor:
         downbeat_prob = padded_downbeat_prob[mask].cpu().numpy()
         beat_prob = beat_prob + downbeat_prob
         _, postp_beat = self.dp(onset_envelope=beat_prob, sr=self.fps, hop_length=1, units='time')
-        _, postp_downbeat = self.dp(onset_envelope=beat_prob, sr=self.fps, hop_length=1, units='time')
+        _, postp_downbeat = _, np.array([])
         return postp_beat, postp_downbeat
 
     
