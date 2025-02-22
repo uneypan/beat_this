@@ -25,33 +25,36 @@ def load_checkpoint(checkpoint_path: str, device: str | torch.device = "cpu") ->
         dict: The loaded checkpoint dictionary.
     """
     try:
-        # try interpreting as local file name
-        return torch.load(checkpoint_path, map_location=device)
+        # try to load cached checkpoint
+        return torch.load(checkpoint_path, map_location=device, weights_only=True) # dismiss the worrning
     except FileNotFoundError:
-        try:
-            if not (
-                str(checkpoint_path).startswith("https://")
-                or str(checkpoint_path).startswith("http://")
-            ):
-                # interpret it as a name of one of our checkpoints
-                checkpoint_url = (
-                    f"{CHECKPOINT_URL}/download?path=%2F&files={checkpoint_path}.ckpt"
+        try: # try to load the checkpoint from the checkpoints folder
+            return torch.load(f'./checkpoints/{checkpoint_path}.ckpt', map_location=device, weights_only=True)
+        except FileNotFoundError:
+            try: # try to load the checkpoint from URL
+                if not (
+                    str(checkpoint_path).startswith("https://")
+                    or str(checkpoint_path).startswith("http://")
+                ):
+                    # interpret it as a name of one of our checkpoints
+                    checkpoint_url = (
+                        f"{CHECKPOINT_URL}/download?path=%2F&files={checkpoint_path}.ckpt"
+                    )
+                    file_name = f"beat_this-{checkpoint_path}.ckpt"
+                else:
+                    # try interpreting as a URL
+                    checkpoint_url = checkpoint_path
+                    file_name = None
+                return torch.hub.load_state_dict_from_url(
+                    checkpoint_url,
+                    file_name=file_name,
+                    map_location=device,
                 )
-                file_name = f"beat_this-{checkpoint_path}.ckpt"
-            else:
-                # try interpreting as a URL
-                checkpoint_url = checkpoint_path
-                file_name = None
-            return torch.hub.load_state_dict_from_url(
-                checkpoint_url,
-                file_name=file_name,
-                map_location=device,
-            )
-        except Exception:
-            raise ValueError(
-                "Could not load the checkpoint given the provided name",
-                checkpoint_path,
-            )
+            except Exception:
+                raise ValueError(
+                    "Could not load the checkpoint given the provided name",
+                    checkpoint_path,
+                )
 
 
 def load_model(
