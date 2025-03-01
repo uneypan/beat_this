@@ -4,49 +4,62 @@ import soundfile as sf
 from tqdm import tqdm
 import torch
 import torchaudio
-import torch
+import torchaudio.transforms as T
 
-def inverse_mel_spectrogram(x, sr=22050, n_fft=2048, hop_length=441, n_mels=128, device="cuda"):
-    
-    dtype = torch.float32  # use float32
-    x = torch.tensor(x, dtype=dtype, device=device)  
-    
-    # reverse log1p
-    mel_spectrogram =(torch.exp(x) - 1)**4 / 10
+def inverse_mel_spectrogram(x, sr=22050, n_fft=1024, hop_length=441, n_mels=128, device="cuda", gain=100.0):
+    # Convert input to float32 and move to device
+    if x.dtype == torch.float16:
+        melspect = x.float().to(device)
+    else:
+        melspect = torch.tensor(x, dtype=torch.float32, device=device)
 
-    # mel filter
-    mel_filter = torchaudio.transforms.MelScale(
-        n_mels=n_mels, 
-        sample_rate=sr, 
-        n_stft=n_fft//2 + 1,
-        f_max=11000,
+    # Step 1: Undo the ln(1 + 1000x) scaling
+    linear_melspect = (torch.expm1(melspect)) / 1000  # [n_mels, T]
+    linear_melspect = linear_melspect * gain  # Boost scale
+
+    # Step 2: Define the original Mel filterbank
+    mel_transform = T.MelSpectrogram(
+        sample_rate=sr,
+        n_fft=n_fft,
+        hop_length=hop_length,
         f_min=30,
-        mel_scale="slaney",
-    ).to(device, dtype=dtype)  
-    
-    mel_filter_matrix = mel_filter(torch.eye(n_fft//2 + 1, dtype=dtype, device=device))  
-    mel_filter_pinv = torch.linalg.pinv(mel_filter_matrix)
+        f_max=11000,
+        n_mels=n_mels,
+        mel_scale='slaney',
+        normalized='frame_length',
+        power=1
+    ).to(device)
 
-    # reverse melspectrogram to spectrogram
-    spectrogram = torch.matmul(mel_filter_pinv, mel_spectrogram)
-    spectrogram = torch.clamp(spectrogram, min=1e-5)  
+    # Get Mel filterbank weights
+    mel_filterbank = mel_transform.mel_scale.fb.T
+    mel_filterbank_pinv = torch.pinverse(mel_filterbank)
 
-    # Griffin-Lim
-    spectrogram_tensor = spectrogram.unsqueeze(0)  
-    waveform = torchaudio.transforms.GriffinLim(n_iter=20, n_fft=n_fft, hop_length=hop_length).to(device, dtype=dtype)(spectrogram_tensor)
+    # Map Mel spectrogram to linear spectrogram
+    spectrogram = torch.matmul(mel_filterbank_pinv, linear_melspect)  # [n_fft / 2 + 1, T]
 
-    waveform = waveform.squeeze().cpu().numpy()
+    # Step 3: Griffin-Lim
+    griffin_lim = T.GriffinLim(
+        n_fft=n_fft,
+        hop_length=hop_length,
+        win_length=n_fft,
+        power=1.0,
+        n_iter=32
+    ).to(device)
 
-    # standardize the waveform to -3dB
-    waveform = waveform / np.max(np.abs(waveform)) * 0.707
+    # Reconstruct waveform
+    waveform = griffin_lim(spectrogram)  # [L]
 
-    return waveform
+    # Step 4: Normalize waveform
+    waveform = waveform / torch.max(torch.abs(waveform))  # [-1, 1]
+
+
+    return waveform.cpu().numpy()
 
 if __name__ == "__main__":
 
     # set the paths
-    NPZ_DIR = "data/audio/spectrograms"
-    OUTPUT_DIR = "data/audio/mono_tracks"
+    NPZ_DIR = "E:/data/audio/spectrograms"
+    OUTPUT_DIR = "E:/data/audio/mono_tracks"
     METADATA_FILE = os.path.join(OUTPUT_DIR, "metadata.tsv")
 
     # create the output directory
