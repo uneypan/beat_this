@@ -9,3 +9,8 @@ wandb/
 .vscode/
 beat_this.egg-info/
 build/
+/src
+Foscarin2024.pdf
+/tests
+*.npy
+best_params_*

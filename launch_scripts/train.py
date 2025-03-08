@@ -5,10 +5,10 @@ import torch
 from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
-
+import torch._dynamo
+torch._dynamo.config.suppress_errors = True
 from beat_this.dataset import BeatDataModule
 from beat_this.model.pl_module import PLBeatThis
-
 
 def main(args):
     # for repeatability
@@ -31,7 +31,7 @@ def main(args):
         torch.backends.cuda.enable_mem_efficient_sdp(False)
         torch.backends.cuda.enable_math_sdp(False)
 
-    data_dir = Path(__file__).parent.parent.relative_to(Path.cwd()) / "data"
+    data_dir = "/tmp/data"
     checkpoint_dir = (
         Path(__file__).parent.parent.relative_to(Path.cwd()) / "checkpoints"
     )
@@ -107,7 +107,8 @@ def main(args):
         ModelCheckpoint(
             every_n_epochs=1,
             dirpath=str(checkpoint_dir),
-            filename=f"{args.name} S{args.seed} {params_str}".strip(),
+            save_top_k=1,
+            filename=f"{args.name} S{args.seed} {params_str}".strip() + " {epoch:03d}",
         )
     )
 

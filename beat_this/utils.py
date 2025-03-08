@@ -3,6 +3,8 @@ from pathlib import Path
 
 import numpy as np
 
+import torch
+import torchaudio.transforms as T
 
 def index_to_framewise(index, length):
     """Convert an index to a framewise sequence"""
@@ -87,3 +89,53 @@ def replace_state_dict_key(state_dict: dict, old: str, new: str):
         if old in key:
             state_dict[key.replace(old, new)] = state_dict.pop(key)
     return state_dict
+
+def inverse_mel_spectrogram(x, sr=22050, n_fft=1024, hop_length=441, n_mels=128, device="cuda", gain=100.0):
+    # Convert input to float32 and move to device
+    if x.dtype == torch.float16:
+        melspect = x.float().to(device)
+    else:
+        melspect = torch.tensor(x, dtype=torch.float32, device=device)
+
+    # Step 1: Undo the ln(1 + 1000x) scaling
+    linear_melspect = (torch.expm1(melspect)) / 1000  # [n_mels, T]
+    linear_melspect = linear_melspect * gain  # Boost scale
+
+    # Step 2: Define the original Mel filterbank
+    mel_transform = T.MelSpectrogram(
+        sample_rate=sr,
+        n_fft=n_fft,
+        hop_length=hop_length,
+        f_min=30,
+        f_max=11000,
+        n_mels=n_mels,
+        mel_scale='slaney',
+        normalized='frame_length',
+        power=1
+    ).to(device)
+
+    # Get Mel filterbank weights
+    mel_filterbank = mel_transform.mel_scale.fb.T
+    mel_filterbank_pinv = torch.pinverse(mel_filterbank)
+
+    # Map Mel spectrogram to linear spectrogram
+    spectrogram = torch.matmul(mel_filterbank_pinv, linear_melspect)  # [n_fft / 2 + 1, T]
+
+    # Step 3: Griffin-Lim
+    griffin_lim = T.GriffinLim(
+        n_fft=n_fft,
+        hop_length=hop_length,
+        win_length=n_fft,
+        power=1.0,
+        n_iter=32
+    ).to(device)
+
+    # Reconstruct waveform
+    waveform = griffin_lim(spectrogram)  # [L]
+
+    # Step 4: Normalize waveform
+    waveform = waveform / torch.max(torch.abs(waveform))  # [-1, 1]
+
+
+    return waveform.cpu().numpy()
+

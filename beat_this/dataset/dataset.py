@@ -125,9 +125,9 @@ class BeatTrackingDataset(Dataset):
         # stop if the annotations that are supposed to be there are not there
         if self.dataset_info[dataset]["has_downbeats"]:
             if beat_annotation.ndim != 2:
-                print(
-                    f"Skipping {item_name} because it has {beat_annotation.ndim} columns but downbeat is supposed to be there."
-                )
+                # print(
+                #     f"Skipping {item_name} because it has {beat_annotation.ndim} columns but downbeat is supposed to be there."
+                # )
                 return
 
         # create a downbeat mask to handle the case where the downbeat is not annotated

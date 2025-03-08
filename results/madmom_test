@@ -1,0 +1,50 @@
+minimal:
+  F-measure_beat: 0.5996472883258607
+  Cemgil_beat: 0.6235618631884723
+  CMLt_beat: 0.09508605901163195
+  AMLt_beat: 0.44905780165647197
+  F-measure_downbeat: 0.20514745571975088
+  Cemgil_downbeat: 0.24857068705466212
+  CMLt_downbeat: 0.0
+  AMLt_downbeat: 0.0008706271281838397
+
+bf:
+  F-measure_beat: 0.468710348974546
+  Cemgil_beat: 0.4811396375830267
+  CMLt_beat: 0.03431014799426426
+  AMLt_beat: 0.29961193254881674
+  F-measure_downbeat: 0.0
+  Cemgil_downbeat: 0.0
+  CMLt_downbeat: 0.0
+  AMLt_downbeat: 0.0  
+
+dbn:
+  F-measure_beat: 0.6168098215508473
+  Cemgil_beat: 0.6429873601965675
+  CMLt_beat: 0.3593641551311651
+  AMLt_beat: 0.7937285245439231
+  F-measure_downbeat: 0.34648166289651444
+  Cemgil_downbeat: 0.33903432146664114
+  CMLt_downbeat: 0.3057862587987783
+  AMLt_downbeat: 0.4425230389101559
+
+dp:
+  F-measure_beat: 0.4922073521313503
+  Cemgil_beat: 0.48159751392989214
+  CMLt_beat: 0.1808549067815313
+  AMLt_beat: 0.3387676345510031
+  F-measure_downbeat: 0.0
+  Cemgil_downbeat: 0.0
+  CMLt_downbeat: 0.0
+  AMLt_downbeat: 0.0
+
+sppk:
+  F-measure_beat: 0.6479088680577592
+  Cemgil_beat: 0.6037171341952027
+  CMLt_beat: 0.45322433336788986
+  AMLt_beat: 0.5102047144631546
+  F-measure_downbeat: 0.3041141882900933
+  Cemgil_downbeat: 0.31367164259379443
+  CMLt_downbeat: 0.17759479014225865
+  AMLt_downbeat: 0.24521099461185344
+

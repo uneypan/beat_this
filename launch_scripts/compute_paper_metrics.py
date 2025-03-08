@@ -15,12 +15,15 @@ seed_everything(0, workers=True)
 
 
 def main(args):
+
     if len(args.models) == 1:
         print("Single model prediction for", args.models[0])
+
+
         # single model prediction
         checkpoint_path = args.models[0]
         checkpoint = load_checkpoint(checkpoint_path)
-
+        checkpoint["hyper_parameters"]["beat_tracker"] = args.beat_tracker
         # create datamodule
         datamodule = datamodule_setup(checkpoint, args.num_workers, args.datasplit)
         # create model and trainer
@@ -59,6 +62,7 @@ def main(args):
             all_metrics = []
             for checkpoint_path in args.models:
                 checkpoint = load_checkpoint(checkpoint_path)
+                checkpoint["hyper_parameters"]["beat_tracker"] = args.beat_tracker
                 model, trainer = plmodel_setup(
                     checkpoint, args.eval_trim_beats, args.gpu, args.postprocessor
                 )
@@ -94,6 +98,7 @@ def main(args):
             for i_model, checkpoint_path in enumerate(args.models):
                 print(f"Model {i_model+1}/{len(args.models)}")
                 checkpoint = load_checkpoint(checkpoint_path)
+                checkpoint["hyper_parameters"]["beat_tracker"] = args.beat_tracker
                 datamodule = datamodule_setup(
                     checkpoint, args.num_workers, args.datasplit
                 )
@@ -140,7 +145,7 @@ def main(args):
 def datamodule_setup(checkpoint, num_workers, datasplit):
     # Load the datamodule
     print("Creating datamodule")
-    data_dir = Path(__file__).parent.parent.relative_to(Path.cwd()) / "data"
+    data_dir = "/tmp/data"
     datamodule_hparams = checkpoint["datamodule_hyper_parameters"]
     # update the hparams with the ones from the arguments
     if num_workers is not None:
@@ -173,7 +178,11 @@ def plmodel_setup(checkpoint, eval_trim_beats, gpu, postprocessor):
         checkpoint["hyper_parameters"]["postprocessor"] = postprocessor
 
     model = PLBeatThis(**checkpoint["hyper_parameters"])
-    model.load_state_dict(checkpoint["state_dict"])
+    if checkpoint["hyper_parameters"]["beat_tracker"] == 'BeatThis':
+        model.load_state_dict(checkpoint["state_dict"])
+        precision = "16-mixed"
+    else:
+        precision = "32"
     # set correct device and accelerator
     if gpu >= 0:
         devices = [gpu]
@@ -187,7 +196,7 @@ def plmodel_setup(checkpoint, eval_trim_beats, gpu, postprocessor):
         devices=devices,
         logger=None,
         deterministic=True,
-        precision="16-mixed",
+        precision=precision,
     )
     return model, trainer
 
@@ -227,7 +236,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--gpu", type=int, default=0)
     parser.add_argument(
-        "--num_workers", type=int, default=1, help="number of data loading workers "
+        "--num_workers", type=int, default=8, help="number of data loading workers "
     )
     parser.add_argument(
         "--eval_trim_beats",
@@ -237,6 +246,13 @@ if __name__ == "__main__":
         help="Override whether to skip the first given seconds "
         "per piece in evaluating (default: as stored in model)",
     )
+    parser.add_argument(
+        "--beat_tracker",
+        type=str,
+        default='BeatThis',
+        choices=['BeatThis', 'madmom', 'librosa'],
+        help="Postprocessor to use for the predictions: (default: %(default)s)",
+    )    
     parser.add_argument(
         "--postprocessor",
         type=str,

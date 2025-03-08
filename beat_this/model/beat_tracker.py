@@ -13,7 +13,6 @@ from torch import nn
 from beat_this.model import roformer
 from beat_this.utils import replace_state_dict_key
 
-
 class BeatThis(nn.Module):
     """
     A neural network model for beat tracking. It is composed of three main components:
@@ -336,3 +335,128 @@ class Head(nn.Module):
         # separate beat from downbeat
         beat, downbeat = rearrange(beat_downbeat, "b t c -> c b t", c=2)
         return {"beat": beat, "downbeat": downbeat}
+
+
+import torch
+import torch.nn as nn
+from madmom.audio.signal import Signal
+from madmom.features import RNNDownBeatProcessor, RNNBeatProcessor
+from beat_this.utils import inverse_mel_spectrogram
+from concurrent.futures import ThreadPoolExecutor
+import os
+import hashlib
+import matplotlib.pyplot as plt
+from scipy.signal import decimate
+import torch.nn.functional as F
+
+class MadmomRNN(nn.Module):
+    """
+    Beat tracking model using Madmom's RNNBeatProcessor.
+    This model takes a mel spectrogram, converts it back to a waveform,
+    and then applies Madmom's beat tracking.
+    """
+    
+    def __init__(self, **args):
+        super().__init__()
+        
+    def get_cache_path_from_x(self, x, cache_dir='/tmp/data/madmom_cache'):
+        """
+        Generate a unique cache file path based on the input mel spectrogram 'x'.
+        """
+        if not os.path.exists(cache_dir):
+            os.makedirs(cache_dir)
+        # Compute MD5 hash from x's bytes
+        m = hashlib.md5()
+        m.update(x.cpu().numpy().tobytes())
+        hash_val = m.hexdigest()
+        return os.path.join(cache_dir, f'RNNBeat_{hash_val}.pt')
+    
+    def downsample_to_50Hz(self, prob):
+        """
+        参数：
+        prob: Tensor，形状为 (L, 2)，表示 100Hz 采样的概率函数，每个值在 [0,1] 内。
+        返回：
+        Tensor，形状为 (ceil(L/2), 2)，为 50Hz 下采样结果。
+        """
+        L = prob.shape[0]
+        # 将形状从 (L, 2) 转换为 (1, 2, L)，以便使用 1D 池化
+        x = prob.transpose(0, 1).unsqueeze(0)  # (1, 2, L)
+        # 若采样点数为奇数，pad最后一个点（这里使用复制最后一个值）
+        if L % 2 != 0:
+            x = F.pad(x, (1, 0), mode='replicate')
+        # 使用 kernel_size=2, stride=2 进行下采样，平均相邻两点
+        x_down = F.avg_pool1d(x, kernel_size=2, stride=2)
+        # 转换回 (ceil(L/2), 2)
+        return x_down.squeeze(0).transpose(0, 1)
+    
+    def forward(self, x):
+        """
+        Forward pass to process a batch of mel spectrograms and extract beat activations.
+        
+        Args:
+            x (torch.Tensor): Input mel spectrogram of shape (batch, T, n_mel)
+        
+        Returns:
+            dict: A dictionary containing beat and downbeat activations.
+        """
+        device = x.device
+        batch, T, n_mel = x.shape
+    
+        # 内部函数：处理单个样本的缓存计算
+        def process_sample(mel_sample):
+            # 使用 mel spectrogram 作为 key 生成缓存路径
+            cache_path = self.get_cache_path_from_x(mel_sample)
+            if os.path.exists(cache_path):
+                act = torch.load(cache_path, map_location=device)
+            else:
+                # Convert mel spectrogram back to waveform
+                wave = inverse_mel_spectrogram(mel_sample, sr=22050)
+                signal = Signal(wave.cpu().numpy(), sample_rate=22050)
+                # 计算 beat activations，返回 numpy 数组
+                act_np = RNNDownBeatProcessor()(signal) # 100 Hz
+                act = torch.from_numpy(act_np)
+                torch.save(act, cache_path) # 将计算结果缓存到磁盘
+            
+            act = self.downsample_to_50Hz(act) * 2 # 50 Hz
+            beat = torch.nn.functional.pad(act[:, 0], (0, T - act.shape[0]), value=1e-5)
+            downbeat = torch.nn.functional.pad(act[:, 1], (0, T - act.shape[0]), value=1e-5)
+ 
+            # 返回时增加 batch 维度
+            return beat.unsqueeze(0).to(device), downbeat.unsqueeze(0).to(device)
+        
+        # Unbind the batch dimension for individual processing
+        mel_samples = torch.unbind(x, dim=0)               
+        # 使用 ThreadPoolExecutor 并行处理每个样本
+        with ThreadPoolExecutor() as executor:
+            # executor.map 会依次传入每个 (mel_sample, wave) 对
+            beat, downbeat = zip(*executor.map(process_sample, mel_samples))
+
+        # 将所有样本的结果拼接成一个 batch
+        res = {"beat": torch.cat(beat, dim=0), 
+               "downbeat": torch.cat(downbeat, dim=0)}
+        return res
+
+import librosa
+def LibrosaOENV(spect, sr=22050, hop_length=441, n_fft=2048):
+    """
+    Compute the onset envelope using librosa's onset.onset_strength function.
+    
+    Args:
+        spect (torch.Tensor): Input mel spectrogram of shape (batch, T, n_mel)
+        
+    Returns:
+        torch.Tensor: Onset envelope of shape (batch, T)
+    """
+    device = spect.device
+    onset_env = librosa.onset.onset_strength(
+        S = spect.cpu().float().numpy().transpose(0, 2, 1),
+        sr = sr,
+        hop_length = hop_length,
+        n_fft = n_fft
+        )
+    res = {
+        "beat": torch.from_numpy(onset_env).to(device), 
+        "downbeat": torch.zeros_like(torch.from_numpy(onset_env)).to(device)
+        }
+    return res
+    

@@ -2,14 +2,13 @@
 # 1. docker compose up -d
 # 2. docker exec -it beat_this bash
 # 3. install the required packages
-# pip install tqdm einops soxr rotary-embedding-torch pytorch_lightning[extra] pandas mir_eval tensorboard wandb nvitop -i https://pypi.tuna.tsinghua.edu.cn/simple 
+# pip install tqdm einops soxr rotary-embedding-torch pytorch_lightning pandas mir_eval wandb nvitop -i https://pypi.tuna.tsinghua.edu.cn/simple 
 # pip install  src/librosa -i https://pypi.tuna.tsinghua.edu.cn/simple 
 # pip install  src/madmom -i https://pypi.tuna.tsinghua.edu.cn/simple 
 # pip install  -e . -e src/temgo 
 
-
 services:
-  deep_learning:
+  beat_this:
     image: docker.1ms.run/pytorch/pytorch:2.1.0-cuda11.8-cudnn8-devel
     container_name: beat_this
     shm_size: 1g
@@ -22,13 +21,35 @@ services:
               count: all
               capabilities: [gpu]
     volumes:
-      - C:/Users/admin/Desktop/beat_this:/workspace # change to your local path
+      - C:/Users/admin/Desktop/beat_this:/workspace  # 挂载本地路径到临时目录
     working_dir: /workspace
     # ports:
     #   - "6006:6006" # tensorboard port
     stdin_open: true
     tty: true
     command: >
+      bash -c "pip install -r requirements.txt && tail -f /dev/null"
       bash -c "tail -f /dev/null"
 
 
+  # tempo_cnn:
+  #   image: docker.1ms.run/tensorflow/tensorflow:2.17.0-gpu
+  #   container_name: tempo_cnn
+  #   shm_size: 1g
+  #   runtime: nvidia
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             count: all
+  #             capabilities: [gpu]
+  #   volumes:
+  #     - C:/Users/admin/Desktop/beat_this/src/tempo-cnn:/workspace  # 挂载本地路径到临时目录
+  #   working_dir: /workspace
+  #   # ports:
+  #   #   - "6006:6006" # tensorboard port
+  #   stdin_open: true
+  #   tty: true
+  #   command: >
+  #     bash -c "pip install -r requirements.txt && tail -f /dev/null"

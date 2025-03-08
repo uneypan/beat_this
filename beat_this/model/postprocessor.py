@@ -4,7 +4,8 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from einops import rearrange
-
+from temgo import BFBeatTracker
+from madmom.features.downbeats import DBNDownBeatTrackingProcessor
 
 class Postprocessor:
     """Postprocessor for the beat and downbeat predictions of the model.
@@ -25,27 +26,14 @@ class Postprocessor:
         assert type in ["minimal", "dbn", 'bf', "dp", "sppk", 'plpdp', 'pf'], "Invalid postprocessing type"
         self.type = type
         self.fps = fps
-        if type == "dbn":
-            from madmom.features.downbeats import DBNDownBeatTrackingProcessor
+        self.dbn = DBNDownBeatTrackingProcessor(
+            beats_per_bar=[3, 4],
+            min_bpm=55.0,
+            max_bpm=210.0,
+            fps=self.fps,
+            transition_lambda=100,
+        )
 
-            self.dbn = DBNDownBeatTrackingProcessor(
-                beats_per_bar=[3, 4],
-                min_bpm=55.0,
-                max_bpm=215.0,
-                fps=self.fps,
-                transition_lambda=100,
-            )
-
-        if type == 'bf':
-            from temgo import BFBeatTracker
-            self.bf = BFBeatTracker(
-                mode='offline', 
-                maxbpm=215, 
-                minbpm=55, 
-                fps=self.fps,
-                align=True,
-            )
-        
         if type == "dp":
             from librosa.beat import beat_track
             self.dp = beat_track
@@ -130,7 +118,21 @@ class Postprocessor:
         downbeat_prob = downbeat_prob.cpu().numpy()
 
         # run the BF
-        postp_beat = np.array(self.bf(onset_envelope=beat_prob))
+        bf = BFBeatTracker(
+                mode='offline',
+                debug=0,
+                minbpm=55, 
+                maxbpm=215, 
+                fps=self.fps,
+                align=False,
+                correct=False,
+                winsize=1.298,
+                P1=0.0177,
+                P2=0.288,
+                multiscale=False,
+            )
+        # GTZAN {'winsize': 1.2984452989566901, 'P1': 0.017747262677187684, 'P2': 0.28857410238557735, 'align': False, 'maxbpm': 226.75, 'minbpm': 55.15, 'correct': False, 'offset': 0.011912936688929709})
+        postp_beat = np.array(bf(onset_envelope=beat_prob)) + 0.011912936688929709
         postp_downbeat = np.array([]) 
         return postp_beat, postp_downbeat
 

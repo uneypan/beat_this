@@ -59,8 +59,8 @@ def convert_to_csv(input_dir, output_csv):
                 writer.writerow(row)
 
 
-input_directory = "/8_folds"  # 替换为您的目录路径
-output_csv_file = "metrics_comparison.csv"  # 输出的CSV文件名
+input_directory = "results/8_folds"  # 替换为您的目录路径
+output_csv_file = "results/8_folds/metrics_comparison.csv"  # 输出的CSV文件名
 
 convert_to_csv(input_directory, output_csv_file)
 print(f"转换完成，结果已保存到 {output_csv_file}")

@@ -43,7 +43,13 @@ pip install  src/temgo -i https://pypi.tuna.tsinghua.edu.cn/simple &&
 
 19c2d491c85055b74350f89a394fe5301cae8042
 
-python /workspace/launch_scripts/train.py --logger wandb --num-workers 4 --batch-size=4 --val-frequency=1 --postprocessor=bf --name=bf --loss=weighted_bce
+python /workspace/launch_scripts/train.py --logger wandb --num-workers 8 --batch-size=6 --val-frequency=1 --postprocessor=dp --name=dp
+
+python /workspace/launch_scripts/train.py --logger wandb --num-workers 6 --batch-size=6 --val-frequency=1 --postprocessor=dbn --name=dbn --fit=val_only 
+python /workspace/launch_scripts/train.py --logger wandb --num-workers 6 --batch-size=6 --val-frequency=1 --postprocessor=bf --name=bf --fit=val_only 
+python /workspace/launch_scripts/train.py --logger wandb --num-workers 6 --batch-size=6 --val-frequency=1 --postprocessor=minimal --name=minimal --fit=val_only 
+python /workspace/launch_scripts/train.py --logger wandb --num-workers 6 --batch-size=6 --val-frequency=1 --postprocessor=sppk --name=sppk --fit=val_only 
+python /workspace/launch_scripts/train.py --logger wandb --num-workers 6 --batch-size=6 --val-frequency=1 --postprocessor=dp --name=dp --fit=val_only 
 
 ### Command line
 
@@ -141,8 +147,8 @@ Then run:
 ```bash
 python launch_scripts/preprocess_audio.py
 ```
-It will create monophonic 22 kHz wave files in `data/audio/mono_tracks`, convert those to spectrograms in `data/audio/spectrograms`, and create spectrogram bundles. Intermediary files are kept and will not be recreated when rerunning the script.
 
+It will create monophonic 22 kHz wave files in `data/audio/mono_tracks`, convert those to spectrograms in `data/audio/spectrograms`, and create spectrogram bundles. Intermediary files are kept and will not be recreated when rerunning the script.
 
 ## Reproducing metrics from the paper
 
@@ -252,7 +258,6 @@ The training requirements match the [evaluation requirements](#requirements-1) f
 ### Command line
 
 #### Train models listed in Table 2 in the paper.
-
 Tensorboard:
 `tensorboard --logdir=lightning_logs --bind_all`
 

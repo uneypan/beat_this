@@ -1,5 +1,7 @@
 {
     "python.analysis.extraPaths": [
-        "./src/madmom"
+        "./src/madmom",
+        "./src/librosa",
+        "C:/Users/admin/Desktop/BFBeatTrack"
     ]
 }
