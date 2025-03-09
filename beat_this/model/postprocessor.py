@@ -6,6 +6,8 @@ import torch.nn.functional as F
 from einops import rearrange
 from temgo import BFBeatTracker
 from madmom.features.downbeats import DBNDownBeatTrackingProcessor
+from BeatNet.particle_filtering_cascade import particle_filter_cascade
+from librosa.beat import beat_track
 
 class Postprocessor:
     """Postprocessor for the beat and downbeat predictions of the model.
@@ -26,17 +28,8 @@ class Postprocessor:
         assert type in ["minimal", "dbn", 'bf', "dp", "sppk", 'plpdp', 'pf'], "Invalid postprocessing type"
         self.type = type
         self.fps = fps
-        self.dbn = DBNDownBeatTrackingProcessor(
-            beats_per_bar=[3, 4],
-            min_bpm=55.0,
-            max_bpm=210.0,
-            fps=self.fps,
-            transition_lambda=100,
-        )
-
-        if type == "dp":
-            from librosa.beat import beat_track
-            self.dp = beat_track
+        self.dp = beat_track
+            
 
     def __call__(
         self,
@@ -82,7 +75,9 @@ class Postprocessor:
         
         elif self.type == 'sppk':
             postp_beat, postp_downbeat = self.postp_sppk(beat, downbeat, padding_mask)
-            
+
+        elif self.type == 'pf':
+            postp_beat, postp_downbeat = self.postp_pf(beat, downbeat, padding_mask)
         else:
             raise ValueError("Invalid postprocessing type")
 
@@ -93,7 +88,50 @@ class Postprocessor:
 
         # update the model prediction dict
         return postp_beat, postp_downbeat
-    
+
+    def postp_pf(self, beat, downbeat, padding_mask):
+        beat_prob = beat.double().sigmoid()
+        downbeat_prob = downbeat.double().sigmoid()
+        with ThreadPoolExecutor() as executor:
+            postp_beat, postp_downbeat = zip(
+                *executor.map(
+                    self._postp_pf_item, beat_prob, downbeat_prob, padding_mask
+                )
+            )
+        return postp_beat, postp_downbeat
+
+    def _postp_pf_item(self, padded_beat_prob, padded_downbeat_prob, mask):
+        """Function to compute the operations that must be computed piece by piece, and cannot be done in batch."""
+        # unpad the predictions by truncating the padding positions
+        beat_prob = padded_beat_prob[mask]
+        downbeat_prob = padded_downbeat_prob[mask]
+        # build an artificial multiclass prediction, as suggested by Böck et al.
+        # again we limit the lower bound to avoid problems with the DBN
+        epsilon = 1e-5
+        combined_act = np.vstack(
+            (
+                np.maximum(
+                    beat_prob.cpu().numpy() - downbeat_prob.cpu().numpy(), epsilon / 2
+                ),
+                downbeat_prob.cpu().numpy(),
+            )
+        ).T
+        # run the PF
+        pf = particle_filter_cascade(
+            beats_per_bar=[3, 4],
+            particle_size=1500,
+            down_particle_size=250,
+            min_bpm=55.0,
+            max_bpm=210.0,
+            fps=self.fps,
+            plot=[],
+            mode='offline',
+        )
+        pf_out = pf.process(combined_act)
+        postp_beat = pf_out[:, 0]
+        postp_downbeat = pf_out[pf_out[:, 1] == 1][:, 0]
+        return postp_beat, postp_downbeat
+
     def postp_bf(self, beat, downbeat, padding_mask):
         beat_prob = beat.double().sigmoid()
         downbeat_prob = downbeat.double().sigmoid()
@@ -129,7 +167,7 @@ class Postprocessor:
                 winsize=1.298,
                 P1=0.0177,
                 P2=0.288,
-                multiscale=False,
+                multiscale=True,
             )
         # GTZAN {'winsize': 1.2984452989566901, 'P1': 0.017747262677187684, 'P2': 0.28857410238557735, 'align': False, 'maxbpm': 226.75, 'minbpm': 55.15, 'correct': False, 'offset': 0.011912936688929709})
         postp_beat = np.array(bf(onset_envelope=beat_prob)) + 0.011912936688929709
@@ -241,7 +279,14 @@ class Postprocessor:
             )
         ).T
         # run the DBN
-        dbn_out = self.dbn(combined_act)
+        dbn = DBNDownBeatTrackingProcessor(
+                beats_per_bar=[3, 4],
+                min_bpm=55.0,
+                max_bpm=210.0,
+                fps=self.fps,
+                transition_lambda=100,
+            )
+        dbn_out = dbn(combined_act)
         postp_beat = dbn_out[:, 0]
         postp_downbeat = dbn_out[dbn_out[:, 1] == 1][:, 0]
         return postp_beat, postp_downbeat

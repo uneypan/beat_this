@@ -252,6 +252,26 @@
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             }
+        },        
+        {
+            "name": "Test With PF",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/launch_scripts/compute_paper_metrics.py",
+            "args": [
+                "--models",
+                "final0",
+                "final1",
+                "final2",
+                "--datasplit",
+                "test",
+                "--postprocessor",
+                "pf"
+            ],
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
         },
         {
             "name": "Val 8-fold Cross-validation With minimal",
