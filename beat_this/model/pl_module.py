@@ -217,8 +217,8 @@ class PLBeatThis(LightningModule):
         losses = self._compute_loss(batch, model_prediction)
         # postprocess the predictions
         postp_beat, postp_downbeat = self.postprocessor(
-            model_prediction["beat"],
-            model_prediction["downbeat"],
+            model_prediction["beat"].sigmoid().double(),
+            model_prediction["downbeat"].sigmoid().double(),
             batch["padding_mask"],
         )
         # compute the metrics
@@ -276,7 +276,8 @@ class PLBeatThis(LightningModule):
         }
         # postprocess the predictions
         postp_beat, postp_downbeat = self.postprocessor(
-            model_prediction["beat"], model_prediction["downbeat"], None
+            model_prediction["beat"].sigmoid().double(),
+            model_prediction["downbeat"].sigmoid().double(), None
         )
         # compute the metrics
         metrics = self._compute_metrics(batch, postp_beat, postp_downbeat, step="test")

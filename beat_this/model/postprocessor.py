@@ -60,6 +60,10 @@ class Postprocessor:
             downbeat = downbeat.unsqueeze(0)
             padding_mask = padding_mask.unsqueeze(0)
 
+        # apply sigmoid if the model output is not already a probability
+        if self.type == 'minimal':
+            beat, downbeat = beat.logit(), downbeat.logit()
+
         if self.type == "minimal":
             postp_beat, postp_downbeat = self.postp_minimal(
                 beat, downbeat, padding_mask
@@ -90,8 +94,8 @@ class Postprocessor:
         return postp_beat, postp_downbeat
 
     def postp_pf(self, beat, downbeat, padding_mask):
-        beat_prob = beat.double().sigmoid()
-        downbeat_prob = downbeat.double().sigmoid()
+        beat_prob = beat
+        downbeat_prob = downbeat
         with ThreadPoolExecutor() as executor:
             postp_beat, postp_downbeat = zip(
                 *executor.map(
@@ -133,8 +137,8 @@ class Postprocessor:
         return postp_beat, postp_downbeat
 
     def postp_bf(self, beat, downbeat, padding_mask):
-        beat_prob = beat.double().sigmoid()
-        downbeat_prob = downbeat.double().sigmoid()
+        beat_prob = beat
+        downbeat_prob = downbeat
         with ThreadPoolExecutor() as executor:
             postp_beat, postp_downbeat = zip(
                 *executor.map(
@@ -175,8 +179,8 @@ class Postprocessor:
         return postp_beat, postp_downbeat
 
     def postp_dp(self, beat, downbeat, padding_mask):
-        beat_prob = beat.double().sigmoid()
-        downbeat_prob = downbeat.double().sigmoid()
+        beat_prob = beat
+        downbeat_prob = downbeat
         with ThreadPoolExecutor() as executor:
             postp_beat, postp_downbeat = zip(
                 *executor.map(
@@ -248,8 +252,8 @@ class Postprocessor:
         return beat_time, downbeat_time
 
     def postp_dbn(self, beat, downbeat, padding_mask):
-        beat_prob = beat.double().sigmoid()
-        downbeat_prob = downbeat.double().sigmoid()
+        beat_prob = beat
+        downbeat_prob = downbeat
         # limit lower and upper bound, since 0 and 1 create problems in the DBN
         epsilon = 1e-5
         beat_prob = beat_prob * (1 - epsilon) + epsilon / 2
@@ -292,8 +296,8 @@ class Postprocessor:
         return postp_beat, postp_downbeat
 
     def postp_sppk(self, beat, downbeat, padding_mask):
-        beat_prob = beat.double().sigmoid()
-        downbeat_prob = downbeat.double().sigmoid()
+        beat_prob = beat
+        downbeat_prob = downbeat
         with ThreadPoolExecutor() as executor:
             postp_beat, postp_downbeat = zip(
                 *executor.map(
