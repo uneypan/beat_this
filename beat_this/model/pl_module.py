@@ -374,22 +374,3 @@ class CosineWarmupScheduler(torch.optim.lr_scheduler._LRScheduler):
             lr_factor = self.raise_to * min(progress, 1)
         return lr_factor
     
-# from mir_eval.beat import f_measure
-# from temgo import BFBeatTracker
-
-# def soft_f1_loss(predicted_probs, target_probs, beta=1.0, epsilon=1e-6):
-#     """
-#     可微的 F1 Loss
-#     :param predicted_probs: 预测的节拍概率 (Tensor, 形状: [batch, time])
-#     :param target_probs: 真实节拍概率 (Tensor, 形状: [batch, time])
-#     :param beta: F-beta 参数（beta=1 时为 F1-score）
-#     :param epsilon: 避免除零
-#     :return: 适合作为损失函数的 Soft-F1 loss
-#     """
-#     tp = (predicted_probs * target_probs).sum(dim=1)  # True Positives
-#     fp = (predicted_probs * (1 - target_probs)).sum(dim=1)  # False Positives
-#     fn = ((1 - predicted_probs) * target_probs).sum(dim=1)  # False Negatives
-    
-#     soft_f1 = (1 + beta**2) * tp / (tp + beta**2 * fn + fp + epsilon)
-#     return 1 - soft_f1.mean()  # 让 F1-score 越大，损失越小
-

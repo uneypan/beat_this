@@ -128,7 +128,7 @@ class Postprocessor:
             mode='offline',
         )
         pf_out = pf.process(combined_act)
-        postp_beat = pf_out[:, 0]
+        postp_beat = pf_out[pf_out[:, 1] == 2][:, 0]
         postp_downbeat = pf_out[pf_out[:, 1] == 1][:, 0]
         return postp_beat, postp_downbeat
 
