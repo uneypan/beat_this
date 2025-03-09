@@ -255,7 +255,7 @@ class Spect2Frames:
                     border_size=6,
                     model=self.model,
                 )
-        return model_prediction["beat"].float(), model_prediction["downbeat"].float()
+        return model_prediction["beat"].double().sigmoid(), model_prediction["downbeat"].double().sigmoid()
 
     def __call__(self, spect):
         return self.spect2frames(spect)
